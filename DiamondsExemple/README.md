@@ -14,3 +14,5 @@
 - `z`: height in mm.
 - `table`: width of top of the diamond relative to its widest point. 
 - `depth` = (2z) / (x+y).
+
+# The goal of this exemple is to show how i interpret dataset to get the best model.
