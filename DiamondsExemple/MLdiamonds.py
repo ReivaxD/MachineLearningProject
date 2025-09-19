@@ -24,7 +24,7 @@ df = pd.read_csv('DiamondsExemple/diamonds.csv', index_col=0)
 df['noise'] = np.random.normal(0, 1, len(df))
 df['x_noise'] = df['x'] + np.random.normal(0, 1, len(df))
 
-"""
+'''
 # If we check our columns with :
 
 print(df.shape)
@@ -33,13 +33,13 @@ print(df.isna().sum())
 
 # We can see that there are no missing values,
 # We can also see that there are columns with the type "Object"
-"""
+'''
 
 # Object type could create bugs especially for the onehotencoder 
 # So it's better anyways to convert them to "category"
 df = df.astype({'cut': 'category', 'color': 'category', 'clarity': 'category'})
 
-"""
+'''
 If we study the plot of the data with the scatterplot 
 
 sns.scatterplot(data=df, x='x', y='price')
@@ -52,7 +52,7 @@ We can observ that there are outliners values :
     -> others values are very high (>= 30) but dont tally with price. 
         We could suppose that it come from  encodingmistake.
 
-"""
+'''
 
 # Remove outliers
 for col in ['x', 'y', 'z']:
@@ -64,7 +64,7 @@ y, X = dmatrices('price ~ x', data=df, return_type='dataframe')
 mod = sm.OLS(y, X)
 res = mod.fit()
 
-"""
+'''
 The result of res.summary() is :
 
                             OLS Regression Results               
@@ -96,7 +96,7 @@ Prob(Omnibus):                  0.000   Jarque-Bera (JB):            34564.825
 Skew:                           1.190   Prob(JB):                         0.00
 Kurtosis:                       6.118   Cond. No.                         31.3
 ==============================================================================
-"""
+'''
 
 # As we can see the model fit by our date is y = -1.418e+04 + 3160.2067*x
 # With a R^2 = 0.787
@@ -194,3 +194,111 @@ Kurtosis:                       6.140   Cond. No.                         589.
 # As an exemple, if we want to interpret the model for a "Premium" cut diamound. The model became :
 # y = -1.542e+04 + 546.5541 + 3163.2553*x + 92.3357*x (values at T.Premium are 1 and the other are 0)
 
+# To automatize the above process we could use a forward or a backward selection.
+
+'''
+Here the pseudo-code of a forward selection :
+1. Let M0 denote the null model, which contains no predictors.
+2. For k =0,...,p 1:
+  (a) Consider all p k models that augment the predictors in Mk
+      with one additional predictor.
+  (b) Choose the best among these p k models, and call it Mk+1.
+      Here best is defined as having smallest RSS or highest R2.
+3. Select a single best model from among M0,...,Mp using cross
+  validated prediction error, Cp (AIC), BIC, or adjusted R2.
+'''
+
+# And the code of the above pseudo code with 3 criteria used
+# R^2 (To maximize)
+# AIC = -2log(L)+2(p +1) // Where L is the likelihood and p is the number of predictors (To minimize)
+# BIC = −2log(L)+(p +1)log(n) // Where L is the likelihood and p is the number of predictors. (To minimize)
+
+# R^2 An error approximation coming from the Residual Sum of Squares
+# AIC reward quality of ajustment and penalize complexity
+# BIC penalize, more havily than AIC, models with many variables
+
+def forward_selection(df, target, criterion='BIC'):
+    assert criterion in ['BIC', 'AIC', 'R2'], 'Unknown criterion !'
+    # Iteratively, select the best feature to add to the model
+    candidates = set(df.columns) - {target}
+    ordered_predictors = []
+    while len(candidates) > 0:
+        rsquared_dict = {}
+        for predictor in candidates:
+            res = fit(df, ordered_predictors + [predictor], target)
+            rsquared_dict[predictor] = res.rsquared
+        best_predictor = max(rsquared_dict, key=rsquared_dict.get)
+        ordered_predictors = ordered_predictors + [best_predictor]
+        candidates.remove(best_predictor)
+    print(f'Best to worst predictors: {ordered_predictors}')
+    # Compute the scores obtained by adding each feature
+    current_features = []
+    scores = []
+    for feature in ordered_predictors:
+        current_features += [feature]
+        res = fit(df, current_features, target)
+        if criterion == 'BIC':
+            scores.append(res.bic)
+        elif criterion == 'AIC':
+            scores.append(res.aic)
+        elif criterion == 'R2':
+            scores.append(res.rsquared)
+    # Select the features that optimize the criterion
+    if criterion in ['BIC', 'AIC']:
+        num_final_features_to_keep = np.argmin(scores)
+    else:
+        num_final_features_to_keep = np.argmax(scores)
+    final_features_to_keep = ordered_predictors[:num_final_features_to_keep + 1]
+    best_final_score = scores[num_final_features_to_keep]
+    return final_features_to_keep, best_final_score
+
+def fit(df, features_to_try, target):
+    formula = get_formula(features_to_try, target)
+    y, X = dmatrices(formula, data=df, return_type='dataframe')
+    mod = sm.OLS(y, X)
+    res = mod.fit()
+    return res
+
+def get_formula(features_to_try, target):
+    return target + ' ~ ' + ' + '.join(features_to_try)
+
+# Then the results of the code :
+final_features, final_score = forward_selection(df, 'price', criterion='R2')
+'''
+With R^2 criterion :
+
+print(f'Best subset of features: {final_features}')
+print(f'Best model for R2: {final_score}')
+
+Best to worst predictors: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth', 'noise', 'x_noise']
+Best subset of features: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth', 'noise', 'x_noise']
+Best model for R2: 0.9205777917787703
+'''
+
+final_features, final_score = forward_selection(df, 'price', criterion='AIC')
+'''
+With AIC criterion :
+
+print(f'Best subset of features: {final_features}')
+print(f'Best model for AIC: {final_score}')
+
+Best to worst predictors: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth', 'noise', 'x_noise']
+Best subset of features: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth']
+Best model for AIC: 910521.8515503915
+'''
+
+final_features, final_score = forward_selection(df, 'price', criterion='BIC')
+'''
+With BIC criterion :
+
+print(f'Best subset of features: {final_features}')
+print(f'Best model for BIC: {final_score}')
+
+Best to worst predictors: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth', 'noise', 'x_noise']
+Best subset of features: ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth']
+Best model for BIC: 910735.3363769369
+'''
+
+# To conclude, we can see than there's three criterion give us the same best criterions
+# The model with BIC give us smallest set of predictors (same as AIC) as ['carat', 'clarity', 'color', 'z', 'cut', 'x', 'y', 'table', 'depth']
+# R^2 select all predictors 
