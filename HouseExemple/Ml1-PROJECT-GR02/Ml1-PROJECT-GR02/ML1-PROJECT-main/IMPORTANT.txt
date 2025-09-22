@@ -1,0 +1,9 @@
+Le fichier à utiliser pour notre algorithme est :
+"rf_project.ipynb" 
+présent dans ce dossier
+
+Les données test et train (.csv) se trouvent dans le répertoire :
+"ML1-PROJECT-main\resources/data"
+
+Les données résultant de l'algorithmes ("submission") se trouvent dans le répertoire :
+"ML1-PROJECT-main\output"
