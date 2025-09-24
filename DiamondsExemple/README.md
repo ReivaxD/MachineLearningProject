@@ -1,4 +1,4 @@
-# Machine-learning-works-exemples
+# MachineLearningExemples
 
 **The dataset that we will be considering is [Diamonds](https://www.kaggle.com/datasets/shivam2503/diamonds), which contains several characteristics of a series of diamonds, such as their dimensions, the quality of their cuts, their prices, etc. The goal of this exemple is to show how i interpret dataset to get the best model. Datasets nowadays could have a lot of variable and models need to select best predictors to avoid overfitting.**
 
