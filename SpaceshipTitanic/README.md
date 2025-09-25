@@ -4,12 +4,17 @@
 
 **Dataset's column information:**
 
-- `Common Name`: The common name of a crocodile.
-- `Scientific Name`: The scientific name of a crocodile.
-- `Family`: The family (unique = "Crocodylidae")
-- `Genus`: The genus of the crocodile (Crocodylus, Mecistops, etc)
-- `Observed Length`: The length of the crocodile (m)
-- `Observed Weight`: The weight of the crocodile (kg)
-- `Age Class`: The maturity of the crocodile (Adult, Subadult, etc)
-- `Sex`: Male/Female/Unknown
-- `Date of Observation`: When the data get collected
+   - `PassengerId`
+   - `HomePlanet`
+   - `CryoSleep`
+   - `Cabin`
+   - `Destination`
+   - `Age`
+   - `VIP`
+   - `RoomService`
+   - `FoodCourt`
+   - `ShoppingMall`
+   - `Spa`
+   - `VRDeck`
+   - `Name`
+   - `Transported`
